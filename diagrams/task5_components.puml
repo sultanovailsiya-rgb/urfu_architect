@@ -1,0 +1,51 @@
+@startuml
+title UML-диаграмма компонентов системы видеоплатформы
+skinparam componentStyle rectangle
+skinparam defaultFontSize 14
+skinparam packageFontSize 15
+skinparam titleFontSize 17
+
+package "Клиентская часть" {
+  [Веб-приложение\n(браузер)] as Web
+  [Мобильное приложение] as Mobile
+}
+
+package "Слой бизнес-логики" {
+  [API-шлюз] as GW
+  [Сервис авторизации] as Auth
+  [Сервис управления видео] as VideoMgmt
+  [Сервис обработки видео\n(транскодинг, превью)] as Transcode
+  [Поисковый сервис] as Search
+  [Сервис комментариев и лайков] as Social
+  [Сервис статистики и выплат] as Stats
+}
+
+package "Слой данных" {
+  database "База данных метаданных\n(пользователи, видео,\nкомментарии, статистика)" as DB
+  [Объектное хранилище\n(видеофайлы, превью)] as Storage
+  [Поисковый индекс] as Index
+}
+
+[CDN (сеть доставки контента)] as CDN
+
+Web --> GW : HTTPS
+Mobile --> GW : HTTPS
+GW --> Auth
+GW --> VideoMgmt
+GW --> Search
+GW --> Social
+GW --> Stats
+Auth --> DB
+VideoMgmt --> Transcode
+VideoMgmt --> DB
+VideoMgmt --> Storage
+Transcode --> Storage
+Search --> Index
+Search --> DB
+Social --> DB
+Stats --> DB
+CDN --> Storage : отдача видео
+Web ..> CDN : воспроизведение видео
+Mobile ..> CDN : воспроизведение видео
+
+@enduml

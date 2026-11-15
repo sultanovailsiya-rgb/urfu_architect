@@ -1,0 +1,56 @@
+@startuml
+title UML-диаграмма развёртывания системы видеоплатформы
+left to right direction
+skinparam defaultFontSize 14
+skinparam nodeFontSize 15
+skinparam titleFontSize 17
+
+node "Клиент пользователя" as Client {
+  artifact "Браузер или\nмобильное приложение" as ClientApp
+}
+
+node "CDN (сеть доставки контента)" as CDN
+
+node "Балансировщик нагрузки" as LB
+
+node "Кластер веб-серверов" as WebServers {
+  artifact "API-шлюз и веб-приложение" as WebApp
+}
+
+node "Кластер прикладных серверов" as AppServers {
+  artifact "Сервисы бизнес-логики:\nавторизация, управление видео,\nпоиск, комментарии и лайки,\nстатистика и выплаты" as Services
+}
+
+node "Кластер серверов обработки видео" as Workers {
+  artifact "Воркеры транскодинга\nи генерации превью" as WorkerApp
+}
+
+node "Кластер СУБД" as DBNode {
+  artifact "Основная БД метаданных" as DBMain
+  node "Реплика (чтение статистики)" as Replica {
+    artifact "Реплика БД" as DBReplica
+  }
+}
+
+node "Объектное хранилище" as StorageNode {
+  artifact "Видеофайлы и превью" as Files
+}
+
+node "Сервер мониторинга и логов" as Mon {
+  artifact "Сбор метрик и журналов" as MonApp
+}
+
+Client --> LB : HTTPS-запросы
+LB --> WebServers
+WebServers --> AppServers : запросы API
+AppServers --> Workers : задания обработки видео
+AppServers --> DBNode : запросы к БД (запись и чтение)
+Workers --> StorageNode : сохранение обработанного видео и превью
+AppServers --> StorageNode : приём исходных файлов от владельца
+Client --> CDN : потоковое воспроизведение
+CDN --> StorageNode : отдача видеофайлов
+WebServers --> Mon : журналы и метрики
+AppServers --> Mon : журналы и метрики
+Workers --> Mon : журналы и метрики
+
+@enduml
